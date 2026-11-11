@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>11/02測試版</title>
+    <title>11/08測試版</title>
     <style>
         body {
             margin: 0;
@@ -34,7 +34,7 @@
 <body>
     <button id="fsBtn">全螢幕</button>
     <!-- 遊戲畫布 -->
-    <canvas id="gameCanvas" width="300" height="300"></canvas>
+    <canvas id="gameCanvas" width="200" height="200"></canvas>
     
 
     <script>
@@ -57,7 +57,7 @@
          */
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');//叫出繪圖的工具
-        const TILE_SIZE = 20; // 每個方格的大小 (像素)
+        const TILE_SIZE = 30; // 每個方格的大小 (像素)
 
         // 簡單的 2D 陣列地圖: 1 代表牆壁, 0 代表可移動的空地
         const map = [
@@ -72,7 +72,7 @@
             [1,0,1,1,1,1,1,0,1,1,1,1,1,0,1],
             [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
             [1,1,1,0,1,0,1,1,1,0,1,1,1,1,1],
-            [1,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,1,0,0,0,0,1,1],
             [1,0,1,0,1,1,1,0,1,1,1,1,0,0,1],
             [1,0,0,0,1,0,0,0,0,0,0,0,0,0,1],
             [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
@@ -86,20 +86,27 @@
          * ==========================================
          */
         const player = {
-            col: 1,           // 邏輯上的網格 X 座標 (起點在 1,1)
-            row: 1,           // 邏輯上的網格 Y 座標
-            px: 1 * TILE_SIZE,// 渲染用的像素 X 座標
-            py: 1 * TILE_SIZE,// 渲染用的像素 Y 座標
-            targetPx: 1 * TILE_SIZE, // 移動目標的像素 X 座標
-            targetPy: 1 * TILE_SIZE, // 移動目標的像素 Y 座標
+            col: 1,           
+            row: 1,           
+            px: 1 * TILE_SIZE,
+            py: 1 * TILE_SIZE,
+            targetPx: 1 * TILE_SIZE,
+            targetPy: 1 * TILE_SIZE,
             nextdx:0,
             nextdy:0,
-            isMoving: false,  // 動畫狀態鎖定 (若為 true 則不接受新指令)
-            speed: 10,        // 移動速度 (每幀移動的像素，越高越快)
-            color: '#3498db',  // 角色顏色 (藍色)
-            hb:100,
+            isMoving: false,
+            speed: 10,        
+            color: '#3498db',
+            hp:100,
             point:0
         };
+        
+        const camera = {
+            cx: 1 * TILE_SIZE,
+            cy: 1 * TILE_SIZE,
+            sp: 0.00005,
+            
+        }
 
         /**
          * ==========================================
@@ -122,9 +129,7 @@
                 nextRow += dy;
             }
 
-            // 如果計算出的終點跟原本的位置不同 (代表可以移動)
             if (nextCol !== player.col || nextRow !== player.row) {
-                // 更新邏輯網格座標
                 player.col = nextCol;
                 player.row = nextRow;
                 
@@ -169,7 +174,6 @@
                     player.px += (diffX / distance) * player.speed;
                     player.py += (diffY / distance) * player.speed;
                 }
-                if(Math.random()>0.99) dropLoot();
             }
         }
         
@@ -186,10 +190,23 @@
         
         function getLoot(){
         }
-
+        function cameraMove(){
+            const dcpx=player.px-camera.cx;
+            const dcpy=player.py-camera.cy;
+            const dcp = Math.sqrt(dcpx * dcpx + dcpy * dcpy);
+            const speed = dcp * dcp * camera.sp;
+            camera.cx += dcpx * speed;
+            camera.cy += dcpy * speed;
+            cameraX = camera.cx - (canvas.width / 2);
+            cameraY = camera.cy - (canvas.height / 2);
+            ctx.save(); // 儲存當前畫布狀態
+            ctx.translate(-cameraX, -cameraY); 
+        } 
         function draw() {
-            // 清空畫布
+            
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            cameraMove();
 
             // 繪製地圖網格
             for (let r = 0; r < ROWS; r++) {
@@ -217,6 +234,7 @@
             // 讓玩家方塊比格子稍微小一點，看起來比較舒服 (padding 4px)
             const padding = 4;
             ctx.fillRect(player.px + padding, player.py + padding, TILE_SIZE - padding * 2, TILE_SIZE - padding * 2);
+            ctx.restore();
         }
 
         function gameLoop() {
@@ -285,7 +303,3 @@
     </script>
 </body>
 </html>
-
-
-
-
